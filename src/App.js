@@ -1,26 +1,53 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { connect } from 'react-redux';
+import { URL } from './applicationConstants';
+import { checkToken } from './actions/currentUserActions';
+import HomeContainer from './containers/HomeContainer';
+import LoginContainer from './containers/LoginContainer';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends React.Component{
+  render() {
+    return (
+      <BrowserRouter history={this.props.history}>
+        <Switch>
+          <PrivateRoute 
+            exact path="/" 
+            component={HomeContainer} 
+            loginStatus={this.props.currentUser.loggedIn} 
+          />
+
+          <Route path="/login" component={LoginContainer} />
+
+          <PrivateRoute 
+            path="/home"
+            component={HomeContainer}
+            loginStatus={this.props.currentUser.loggedIn}
+          />
+
+        </Switch>
+      </BrowserRouter>
+    );
+  }
 }
 
-export default App;
+const PrivateRoute = ({ component: Component, loginStatus, ...rest }) => {
+  return (
+    <Route {...rest}
+    render={ props => (loginStatus ? <Component { ...props } /> : <Redirect to="/login" />)} />
+  )
+}
+
+const mapStateToProps = state => {
+  return ({
+    currentUser: state.currentUser
+  })
+}
+
+const mapDispatchToProps = dispatch => {
+  return ({
+    checkToken: () => dispatch(checkToken(URL))
+  })
+}
+export default connect(mapStateToProps, mapDispatchToProps)(App);
